@@ -72,12 +72,15 @@ foreach(root ${BOARD_ROOT})
   endforeach()
 endforeach()
 
-# Process shields in-order
-if(DEFINED SHIELD)
-  foreach(s ${SHIELD_AS_LIST})
-    if(NOT ${s} IN_LIST SHIELD_LIST)
-      continue()
-    endif()
+  if(DEFINED SHIELD)
+    foreach(s ${SHIELD_AS_LIST})
+      if(NOT ${s} IN_LIST SHIELD_LIST)
+        continue()
+      endif()
+
+      if(BOARD_DIR AND NOT (${root} STREQUAL ${ZEPHYR_BASE}))
+        set(SHIELD_${s}_OUT_OF_TREE 1)
+      endif()
 
     list(REMOVE_ITEM SHIELD-NOTFOUND ${s})
 

@@ -46,6 +46,7 @@ endif()
 # After processing all shields, only invalid shields will be left in this list.
 set(SHIELD-NOTFOUND ${SHIELD_AS_LIST})
 
+unset(SHIELD_LIST)
 foreach(root ${BOARD_ROOT})
   set(shield_dir ${root}/boards/shields)
   # Match the Kconfig.shield files in the shield directories to make sure we are
@@ -60,7 +61,6 @@ foreach(root ${BOARD_ROOT})
   # from each file and looking for <shield>.overlay files in there.
   # Each overlay corresponds to a shield. We obtain the shield name by
   # removing the .overlay extension.
-  unset(SHIELD_LIST)
   foreach(shields_refs ${shields_refs_list})
     get_filename_component(shield_path ${shields_refs} DIRECTORY)
     file(GLOB shield_overlays RELATIVE ${shield_path} ${shield_path}/*.overlay)
@@ -68,53 +68,83 @@ foreach(root ${BOARD_ROOT})
       get_filename_component(shield ${overlay} NAME_WE)
       list(APPEND SHIELD_LIST ${shield})
       set(SHIELD_DIR_${shield} ${shield_path})
+      set(SHIELD_ROOT_${shield} ${root})
+
     endforeach()
   endforeach()
+#   if(DEFINED SHIELD)
+#     foreach(s ${SHIELD_AS_LIST})
+#       if(NOT ${s} IN_LIST SHIELD_LIST)
+#         continue()
+#       endif()
 
-  if(DEFINED SHIELD)
-    foreach(s ${SHIELD_AS_LIST})
-      if(NOT ${s} IN_LIST SHIELD_LIST)
-        continue()
-      endif()
+#       if(BOARD_DIR AND NOT (${root} STREQUAL ${ZEPHYR_BASE}))
+#         set(SHIELD_${s}_OUT_OF_TREE 1)
+#       endif()
 
-      if(BOARD_DIR AND NOT (${root} STREQUAL ${ZEPHYR_BASE}))
-        set(SHIELD_${s}_OUT_OF_TREE 1)
-      endif()
+#       list(REMOVE_ITEM SHIELD-NOTFOUND ${s})
 
-      list(REMOVE_ITEM SHIELD-NOTFOUND ${s})
+#       # Add <shield>.overlay to a temporary variable
+#       set(shield_${s}_dts_file ${SHIELD_DIR_${s}}/${s}.overlay)
 
-      # Add <shield>.overlay to a temporary variable
-      set(shield_${s}_dts_file ${SHIELD_DIR_${s}}/${s}.overlay)
+#       # Search for shield/shield.conf file
+#       if(EXISTS ${SHIELD_DIR_${s}}/${s}.conf)
+#         # Add <shield>.conf to a temporary variable
+#         set(shield_${s}_conf_file ${SHIELD_DIR_${s}}/${s}.conf)
+#       endif()
+#     endforeach()
+#   endif()
+# endforeach()
 
-      # Search for shield/shield.conf file
-      if(EXISTS ${SHIELD_DIR_${s}}/${s}.conf)
-        # Add <shield>.conf to a temporary variable
-        set(shield_${s}_conf_file ${SHIELD_DIR_${s}}/${s}.conf)
-      endif()
-    endforeach()
-  endif()
+# # Process shields in-order
+# if(DEFINED SHIELD)
+#   foreach(s ${SHIELD_AS_LIST})
+#     # Add <shield>.overlay to the shield_dts_files output variable.
+#     list(APPEND
+#       shield_dts_files
+#       ${shield_${s}_dts_file}
+#     )
+
 endforeach()
 
-# Process shields in-order
 if(DEFINED SHIELD)
   foreach(s ${SHIELD_AS_LIST})
+    if(NOT ${s} IN_LIST SHIELD_LIST)
+      continue()
+    endif()
+
+    if(NOT (SHIELD_ROOT_${s} STREQUAL ${ZEPHYR_BASE}))
+      set(SHIELD_${s}_OUT_OF_TREE 1)
+    endif()
+
+    list(REMOVE_ITEM SHIELD-NOTFOUND ${s})
+
     # Add <shield>.overlay to the shield_dts_files output variable.
     list(APPEND
       shield_dts_files
-      ${shield_${s}_dts_file}
-      )
+      ${SHIELD_DIR_${s}}/${s}.overlay
+    )
 
     # Add the shield's directory to the SHIELD_DIRS output variable.
     list(APPEND
       SHIELD_DIRS
       ${SHIELD_DIR_${s}}
-      )
+    )
 
-    if(DEFINED shield_${s}_conf_file)
+    # if(DEFINED shield_${s}_conf_file)
+    #   list(APPEND
+    #     shield_conf_files
+    #     ${shield_${s}_conf_file}
+    #   )
+    # endif()
+
+    # Search for shield/shield.conf file
+    if(EXISTS ${SHIELD_DIR_${s}}/${s}.conf)
+      # Add <shield>.conf to the shield_conf_files output variable.
       list(APPEND
         shield_conf_files
-        ${shield_${s}_conf_file}
-        )
+        ${SHIELD_DIR_${s}}/${s}.conf
+      )
     endif()
 
     # Add board-specific .conf and .overlay files to their

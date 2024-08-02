@@ -1,3 +1,4 @@
+
 .. raw:: html
 
    <a href="https://www.zephyrproject.org">
@@ -17,6 +18,7 @@
    <img
    src="https://github.com/zephyrproject-rtos/zephyr/actions/workflows/twister.yaml/badge.svg?event=push"></a>
 
+Note: This is a rebase of the 3.6 version including the ZMK fixes.
 
 The Zephyr Project is a scalable real-time operating system (RTOS) supporting
 multiple hardware architectures, optimized for resource constrained devices,
